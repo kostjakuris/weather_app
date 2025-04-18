@@ -1,14 +1,32 @@
 import React, { FormEvent, useState } from 'react';
-import { Box, Button, Flex, Heading, Image, Input } from '@chakra-ui/react';
-import { input, titleOne } from '../../asserts/globalStyles';
+import { Box, Button, Flex, Heading, Image, Input, Text } from '@chakra-ui/react';
+import { errorText, input, titleOne } from '../../asserts/globalStyles';
 import { getCoordinates } from '../../pages/api';
+import { mobxStore } from '../../store/mobx';
+import { observer } from 'mobx-react-lite';
 
-const Header = () => {
+const HeaderComponent = () => {
   const [cityName, setCityName] = useState<string>('');
+  const [isInputEmpty, setIsInputEmpty] = useState<boolean>(false);
+  
   const handleSubmit = async(event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await getCoordinates(cityName);
+    if (!cityName) {
+      setIsInputEmpty(true);
+    } else {
+      await getCoordinates(cityName);
+      setCityName('');
+    }
   };
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCityName(event.target.value);
+    if (!event.target.value) {
+      setIsInputEmpty(true);
+    } else {
+      setIsInputEmpty(false);
+    }
+  };
+  
   return (
     <Box>
       <Flex justifyContent='space-between' align={'center'} pt={'50px'}>
@@ -19,20 +37,26 @@ const Header = () => {
               variant={'outline'}
               mr={'20px'}
               placeholder={'Enter city name'}
+              borderColor={isInputEmpty ? 'red.500' : 'white'}
               css={{...input}}
               type={'text'}
               value={cityName}
-              onChange={(e) => setCityName(e.target.value)}
+              onChange={(event) => handleChange(event)}
+              onBlur={(event) => setIsInputEmpty(false)}
             />
             <Button type={'submit'} background={'white'} width={'55px'} height={'55px'} borderRadius={'50%'}>
               <Image objectFit={'contain'} width={'55px'} height={'30px'} src={'/images/search.svg'} alt={'search'} />
             </Button>
           </Flex>
-          {/*<Text>City name required</Text>*/}
+          {
+            isInputEmpty ?
+              <Text css={{...errorText}}>City name required</Text>
+              : null
+          }
         </form>
       </Flex>
     </Box>
   );
 };
 
-export default Header;
+export const Header = observer(HeaderComponent);
